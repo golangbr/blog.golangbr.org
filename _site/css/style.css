@@ -108,7 +108,7 @@ table.dir td {
   word-wrap: break-word;
   vertical-align: top;
 }
-div#page.wide table.dir td.name {
+#page.wide table.dir td.name {
   white-space: nowrap;
 }
 .alert {
@@ -136,10 +136,10 @@ div#heading a {
 body {
   text-align: center;
 }
-div#page {
+#page {
   width: 100%;
 }
-div#page > .container,
+#page > .container,
 #topbar > .container {
   text-align: left;
   margin-left: auto;
@@ -147,7 +147,7 @@ div#page > .container,
   padding: 0 20px;
   width: 965px;
 }
-div#page.wide > .container,
+#page.wide > .container,
 #topbar.wide > .container {
   width: auto;
 }
