@@ -1,11 +1,12 @@
 ---
 layout: default
 ---
-{{ range .site.posts }}
-<div class="article">
-	<h3 class="title"><a href="{{.url}}">{{ .title }}</a></h3>
-	<p class="date"> {{ .date | date_to_string }}</p>
-	{{ .content }}
-        <cite>Por {{ .author }}</cite>
-</div>
-{{ end }}
+{% for post in site.posts %}
+	<div class="article">
+		<h3 class="title"><a href="{{.url}}">{{ post.title }}</a></h3>
+			<p class="date"> {{ post.date | date_to_string }}</p>
+			{{ post.content }}
+			<cite>Por {{ post.author }}</cite>
+	</div>
+{% endfor %}
+
