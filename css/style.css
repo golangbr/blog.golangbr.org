@@ -127,7 +127,7 @@ div#heading a {
   text-decoration: none;
 }
 
-div#topbar {
+#topbar {
   background: #E0EBF5;
   height: 64px;
   overflow: hidden;
@@ -140,7 +140,7 @@ div#page {
   width: 100%;
 }
 div#page > .container,
-div#topbar > .container {
+#topbar > .container {
   text-align: left;
   margin-left: auto;
   margin-right: auto;
@@ -148,7 +148,7 @@ div#topbar > .container {
   width: 965px;
 }
 div#page.wide > .container,
-div#topbar.wide > .container {
+#topbar.wide > .container {
   width: auto;
 }
 div#plusone {
