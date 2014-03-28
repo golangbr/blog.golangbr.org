@@ -2,12 +2,12 @@
 layout: default
 ---
 <h1 class="title">Índice de artigos</h1>
-    {{ range .site.posts }} 
-  <p class="blogtitle">
-    <a href="{{ .url }}">{{ .title }}</a><br>
-    <span class="date">{{ .date | date_to_string }}</span><br>
-    <span class="tags">{{ .tags }}</span>
+    {% for post in site.posts %}
+	  <p class="blogtitle">
+	    <a href="{{ post.url }}">{{ post.title }}</a><br>
+	    <span class="date">{{ post.date | date_to_string }}</span><br>
+	    <span class="tags">{{ post.tags }}</span>
 
-  </p>
-     {{ end }}
+	  </p>
+	{% endfor %}
 
