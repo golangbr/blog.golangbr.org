@@ -145,7 +145,7 @@ body {
   margin-left: auto;
   margin-right: auto;
   padding: 0 20px;
-  width: 965px;
+  width: 60%;
 }
 #page.wide > .container,
 #topbar.wide > .container {
@@ -162,6 +162,7 @@ div#plusone {
   color: #666;
   font-size: 14px;
   margin: 40px 0;
+  clear:both;
 }
 
 div#menu > a,
@@ -598,10 +599,14 @@ div#playground .output {
 /*************************************************************/
 /*********************** GO LANG BRASIL **********************/
 /*************************************************************/
+#content{
+  width: 70%;
+  float:left;
+}
 #sidebar {
   float: right;
   padding-left: 20px;
-  width: 250px;
+  width: 25%;
   background: white;
 }
 #sidebar p, #sidebar ul {

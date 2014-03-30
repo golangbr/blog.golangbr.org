@@ -4,7 +4,7 @@
  <title>blog.golangbr.org</title>
  <link href="http://blog.golangbr.org/atom.xml" rel="self"/>
  <link href="http://blog.golangbr.org/"/>
- <updated>2014-03-30T13:18:42-03:00</updated>
+ <updated>2014-03-30T15:25:42-03:00</updated>
  <id>http://blog.golangbr.org/</id>
  <author>
    <name>Golang Brasil</name>
@@ -12,5 +12,25 @@
  </author>
 
  
+ <entry>
+   <title>Javascript Idiomático</title>
+   <link href=""/>
+   <updated>16 Mar 2014</updated>
+   <id>http://blog.golangbr.org/programming/javascript/2014/03/16/javascript-idiomatico.html</id>
+   <content type="html"><p>Javascript idiomático? what the fuck? Essa foi a primeira reação que muitos desenvolvedores por ae tiveram. “Pra que preciso escrever javascript de forma consistente? É só javascript”. Bom, o fato é que o javascript tem evoluído muito no últimos anos, e com a consolidação da importância do front-end, isso só tende a aumentar. Hoje vou tentar explorar guias de estilo do javascript, especificamente: a sua importância, guias de estilo que valem a pena dar uma olhada e ferramentas que podem auxiliar a melhorar o nosso querido código javascript.</p>
+
+<p>Como assim guia de estilo? Um guia de estilo é um conjunto de padrões para a escrita e design de código. A implementação de um guia de estilo proporciona uniformidade no estilo de código e formatação, muitas vezes cobrindo orientações sobre recuo (tabs ou espaços), variável e função, convenções de nomeação, onde melhor se aplicam espaços em branco e assim por diante.</p>
+
+<p>E porque isso é importante? Como dizem por ai, código bem escrito não precisa de documentação. Embora isso não seja 100% verdade, mas fato é que quanto mais legível o código, menos nosso ele é, se tornando mais fácil de manter por outros devs. Seguir um guia de estilo consistente ajuda tanto a melhorar a qualidade do código que escrevemos. Isso facilita que outros desenvolvedores o entendam rapidamente, podendo economizar tempo no longo prazo.</p>
+
+<p>Usando de código bem escrito, você pode:</p>
+
+<p>Reduzir o tempo necessário para compreender uma implementação. Tornar mais fácil determinar qual código pode ser reutilizado. Saber como fazer a manutenção do código sem afetar toda a aplicação. E onde eu vejo mais sobre isso? É bom saber que temos desenvolvedores interessados em melhorar a consistência do código JavaScript que escrevem, e o mais legal, grandes empresas e projetos também! Fico muito feliz em recomendar os seguintes guias de estilo:</p>
+
+<p>Idiomatic.js JQuery Core Style Guidelines Google JavaScript Style Guide Bom galera, esse foi meu primeiro post aqui, tentei falar de como o javascript bem escrito e consistente pode ajudar no dia-a-dia do desenvolvedor. Até a próxima!</p>
+
+<p>Referencias: http://bartwullems.blogspot.com.br/2012/04/principles-of-writing-consistent.html http://dev.opera.com/articles/view/efficient-javascript/ https://github.com/rwldrn/idiomatic.js/tree/master/translations/pt_BR</p></content>
+ </entry>
+
 </feed>
 
