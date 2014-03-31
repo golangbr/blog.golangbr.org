@@ -14,14 +14,13 @@ layout: nil
    <email>contato@golangbr.org</email>
  </author>
 
- {% for post in site.posts %}
+ {{ range .site.posts }}
  <entry>
-   <title>{{ post.title }}</title>
+   <title>{{ .title }}</title>
    <link href="{{ .url }}"/>
-   <updated>{{ post.date | date_to_string }}</updated>
-   <id>http://blog.golangbr.org{{ post.url }}</id>
-   <content type="html">{{ post.content | html }}</content>
+   <updated>{{ .date | date_to_xmlschema }}</updated>
+   <id>http://blog.golangbr.org{{ .url }}</id>
+   <content type="html">{{ .content | html }}</content>
  </entry>
-{% endfor %}
+ {{ end }}
 </feed>
-
