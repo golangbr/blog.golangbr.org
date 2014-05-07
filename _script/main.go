@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"sync"
 )
 
 type XMLFeed struct {
@@ -30,46 +32,80 @@ func (e Entrada) String() string {
 }
 
 func main() {
-        //1- [TODO] olha arquivo texto no repositório do blog com lista de blogs
-        //2- [TODO] iniciar uma goroutine para olhar se o blog possui feeds
-        //3- [OK]   caso possua, parseia entradas e olha se a última possui a tag golang (apenas a última para simplificar)
-        //4- [OK]   caso possua a tag transforma em markdown com o post e informações e "commita" no diretório de posts
-        //5- [TODO] commit dispara o deploy automatizado que atualiza o blog
+	//1- [OK]	olha arquivo texto no repositório do blog com lista de blogs
+	//2- [OK]	iniciar uma goroutine para olhar se o blog possui feeds
+	//3- [OK]	caso possua, parseia entradas 
+	//3.1[TODO]	e olha se a última possui a tag golang (apenas a última para simplificar)
+	//4- [OK] 	caso possua a tag transforma em markdown com o post e informações 
+	//4.1[TODO]	e "commita" no diretório de posts
+	//5- [TODO] 	committ dispara o deploy automatizado que atualiza o blog
+	
+	listaBlogs := listaBlogs()
 
-	//response, err := http.Get("http://maiconio.blogspot.com/feeds/posts/default")
-	resp, err := http.Get("http://127.0.0.1/teste/default")
+	var w sync.WaitGroup
+	w.Add(len(listaBlogs))
 
+	for i := 0; i < len(listaBlogs); i++ {
+		go gravaUltimaEntrada(listaBlogs[i], &w)
+	}
+
+	w.Wait()
+	fmt.Println("pronto");
+}
+
+
+
+func gravaUltimaEntrada(urlBlog string, w *sync.WaitGroup) {
+	if len(urlBlog) > 0 {
+		fmt.Println("Processando o blog: " + urlBlog);
+		resp, err := http.Get(urlBlog)
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		} else {
+			defer resp.Body.Close()
+			conteudoXML, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Printf("%s", err)
+				os.Exit(1)
+			}
+
+			var x XMLFeed
+			xml.Unmarshal(conteudoXML, &x)
+
+			ultimaEntrada := x.Entradas[len(x.Entradas)-1]
+
+			nomeArquivo := ultimaEntrada.DataPublicacao[0:10] + "-" + url.QueryEscape(ultimaEntrada.Titulo) + ".md"
+			postMarkdown, err := os.Create("../_posts/" + nomeArquivo)
+			if err != nil {
+				fmt.Printf("%s", err)
+				os.Exit(1)
+			} else {
+
+				io.WriteString(postMarkdown, "---\n")
+				io.WriteString(postMarkdown, "layout: default\n")
+				io.WriteString(postMarkdown, "title: "+ultimaEntrada.Titulo+"\n")
+				io.WriteString(postMarkdown, "---\n")
+				io.WriteString(postMarkdown, ultimaEntrada.Conteudo)
+				postMarkdown.Close()
+			}
+
+		}
+	}
+	w.Done()
+}
+
+func listaBlogs() []string {
+	resp, err := http.Get("https://raw.githubusercontent.com/maiconio/blog.golangbr.org/master/_BLOGS")
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
 	} else {
 		defer resp.Body.Close()
-		conteudoXML, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("%s", err)
-			os.Exit(1)
-		}
-
-		var x XMLFeed
-		xml.Unmarshal(conteudoXML, &x)
-
-		ultimaEntrada := x.Entradas[len(x.Entradas)-1]
-
-		nomeArquivo := ultimaEntrada.DataPublicacao[0:10] + "-" + url.QueryEscape(ultimaEntrada.Titulo) + ".md"
-		postMarkdown, err := os.Create("../_posts/"+nomeArquivo)
-		if err != nil {
-			fmt.Printf("%s", err)
-			os.Exit(1)
-		} else {
-
-			io.WriteString(postMarkdown, "---\n")
-			io.WriteString(postMarkdown, "layout: default\n")
-			io.WriteString(postMarkdown, "title: "+ultimaEntrada.Titulo+"\n")
-			io.WriteString(postMarkdown, "---\n")
-			io.WriteString(postMarkdown, ultimaEntrada.Conteudo)
-			postMarkdown.Close()
-		}
-
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		blogs := strings.Split(string(bytes), "\n")
+		return blogs
 	}
 
+	return nil
 }
