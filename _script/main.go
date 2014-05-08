@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	//"github.com/google/go-github/github"
 )
 
 type XMLFeed struct {
@@ -21,6 +22,11 @@ type Entrada struct {
 	Conteudo       string `xml:"content"`
 	Titulo         string `xml:"title"`
 	DataPublicacao string `xml:"published"`
+	Categorias             []Categoria `xml:"category"`
+}
+
+type Categoria struct {
+	Termo string `xml:"term,attr"`
 }
 
 func (x XMLFeed) String() string {
@@ -35,7 +41,9 @@ func main() {
 	//1- [OK]	olha arquivo texto no repositório do blog com lista de blogs
 	//2- [OK]	iniciar uma goroutine para olhar se o blog possui feeds
 	//3- [OK]	caso possua, parseia entradas 
-	//3.1[TODO]	e olha se a última possui a tag golang (apenas a última para simplificar)
+	//3.1[OK]	e olha se a última possui a tag golang (apenas a última para simplificar)
+	//3.2[TODO]	criar estrutura pra controlar a data e hora da ultima execução. 
+	//		Parsear apenas entradas que tenham data de publicação superior a esta marca.
 	//4- [OK] 	caso possua a tag transforma em markdown com o post e informações 
 	//4.1[TODO]	e "commita" no diretório de posts
 	//5- [TODO] 	committ dispara o deploy automatizado que atualiza o blog
@@ -73,23 +81,31 @@ func gravaUltimaEntrada(urlBlog string, w *sync.WaitGroup) {
 			var x XMLFeed
 			xml.Unmarshal(conteudoXML, &x)
 
-			ultimaEntrada := x.Entradas[len(x.Entradas)-1]
+			ultimaEntrada := x.Entradas[0]
 
-			nomeArquivo := ultimaEntrada.DataPublicacao[0:10] + "-" + url.QueryEscape(ultimaEntrada.Titulo) + ".md"
-			postMarkdown, err := os.Create("../_posts/" + nomeArquivo)
-			if err != nil {
-				fmt.Printf("%s", err)
-				os.Exit(1)
-			} else {
-
-				io.WriteString(postMarkdown, "---\n")
-				io.WriteString(postMarkdown, "layout: default\n")
-				io.WriteString(postMarkdown, "title: "+ultimaEntrada.Titulo+"\n")
-				io.WriteString(postMarkdown, "---\n")
-				io.WriteString(postMarkdown, ultimaEntrada.Conteudo)
-				postMarkdown.Close()
+			ehGolang := false;
+			for i := 0; i < len(ultimaEntrada.Categorias); i++ {
+				if strings.Contains(strings.ToLower(ultimaEntrada.Categorias[i].Termo), "golang") {
+					ehGolang = true;
+				}
 			}
+		
+			if ehGolang {
+				nomeArquivo := ultimaEntrada.DataPublicacao[0:10] + "-" + url.QueryEscape(ultimaEntrada.Titulo) + ".md"
+				postMarkdown, err := os.Create("../_posts/" + nomeArquivo)
+				if err != nil {
+					fmt.Printf("%s", err)
+					os.Exit(1)
+				} else {
 
+					io.WriteString(postMarkdown, "---\n")
+					io.WriteString(postMarkdown, "layout: default\n")
+					io.WriteString(postMarkdown, "title: "+ultimaEntrada.Titulo+"\n")
+					io.WriteString(postMarkdown, "---\n")
+					io.WriteString(postMarkdown, ultimaEntrada.Conteudo)
+					postMarkdown.Close()
+				}
+			}
 		}
 	}
 	w.Done()
