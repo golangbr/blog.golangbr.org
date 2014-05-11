@@ -5,14 +5,14 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/google/go-github/github"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
-	// "crypto/sha1"
+	"io"
+	"time"
 )
 
 type XMLFeed struct {
@@ -50,20 +50,26 @@ func main() {
 	//4.1[70%]	e "commita" no diretório de posts
 	//5- [OK] 	committ dispara o deploy automatizado que atualiza o blog
 
+
+
 	listaBlogs := listaBlogs()
+	ultimaLeitura := lerUltimaLeitura()
 
 	var w sync.WaitGroup
 	w.Add(len(listaBlogs))
 
 	for i := 0; i < len(listaBlogs); i++ {
-		go gravaUltimaEntrada(listaBlogs[i], &w)
+		go gravaUltimasEntradas(listaBlogs[i], &w, ultimaLeitura)
 	}
 
 	w.Wait()
+	escreverUltimaLeitura()
 	fmt.Println("pronto")
 }
 
-func gravaUltimaEntrada(urlBlog string, w *sync.WaitGroup) {
+
+//trocar p/ gravar as ultimas 5 entradas.
+func gravaUltimasEntradas(urlBlog string, w *sync.WaitGroup, ultimaLeitura string) {
 	if len(urlBlog) > 0 {
 		fmt.Println("Processando o blog: " + urlBlog)
 		resp, err := http.Get(urlBlog)
@@ -81,30 +87,31 @@ func gravaUltimaEntrada(urlBlog string, w *sync.WaitGroup) {
 			var x XMLFeed
 			xml.Unmarshal(conteudoXML, &x)
 
-			ultimaEntrada := x.Entradas[0]
+			for i := 0; i < len(x.Entradas); i++ {
+				strData := x.Entradas[i].DataPublicacao
+				strData = strData[0:4]+strData[5:7]+strData[8:10]+strData[11:13]+strData[14:16]
+				fmt.Println(strData)
+				
+				if strData > ultimaLeitura {
+					entrada := x.Entradas[i]
 
-			ehGolang := false
-			for i := 0; i < len(ultimaEntrada.Categorias); i++ {
-				if strings.Contains(strings.ToLower(ultimaEntrada.Categorias[i].Termo), "golang") {
-					ehGolang = true
-				}
-			}
+					ehGolang := false
+					for i := 0; i < len(entrada.Categorias); i++ {
+						if strings.Contains(strings.ToLower(entrada.Categorias[i].Termo), "golang") {
+							ehGolang = true
+						}
+					}
 
-			if ehGolang {
-				nomeArquivo := ultimaEntrada.DataPublicacao[0:10] + "-" + url.QueryEscape(ultimaEntrada.Titulo) + ".md"
-				postMarkdown, err := os.Create("../_posts/" + nomeArquivo)
-				if err != nil {
-					fmt.Printf("%s", err)
-					os.Exit(1)
-				} else {
-					io.WriteString(postMarkdown, "---\n")
-					io.WriteString(postMarkdown, "layout: default\n")
-					io.WriteString(postMarkdown, "title: "+ultimaEntrada.Titulo+"\n")
-					io.WriteString(postMarkdown, "---\n")
-					io.WriteString(postMarkdown, ultimaEntrada.Conteudo)
-					postMarkdown.Close()
+					if ehGolang {
+						nomeArquivo := entrada.DataPublicacao[0:10] + "-" + url.QueryEscape(entrada.Titulo) + ".md"
+						conteudo := "---\n"
+						conteudo = conteudo + "layout: default\n"
+						conteudo = conteudo + "title: "+entrada.Titulo+"\n"
+						conteudo = conteudo + "---\n"
+						conteudo = conteudo + entrada.Conteudo
 
-					comitaArquivo(nomeArquivo, ultimaEntrada.Conteudo)
+						comitaArquivo(nomeArquivo, conteudo)
+					}
 				}
 			}
 		}
@@ -127,35 +134,64 @@ func listaBlogs() []string {
 	return nil
 }
 
+func lerUltimaLeitura() string {
+	dat, _ := ioutil.ReadFile("ultimaLeitura")
+	return string(dat)
+}
+
+func escreverUltimaLeitura() {
+	f, err := os.Create("ultimaLeitura")
+	if err != nil {
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	} else {
+		n := time.Now().Format(time.RFC3339)
+		n = n[0:4]+n[5:7]+n[8:10]+n[11:13]+n[14:16]
+		io.WriteString(f, n)
+		f.Close()
+	}
+}
+
 func comitaArquivo(nomeArquivo, conteudo string) {
 	t := &oauth.Transport{
-		Token: &oauth.Token{AccessToken: "--------------------------"},
+		Token: &oauth.Token{AccessToken: ""},
 	}
 
-	client := github.NewClient(t.Client())
-	orgs, _, _ := client.Organizations.List("maiconio", nil)
-	fmt.Println(orgs)
+	if t != nil {
+		client := github.NewClient(t.Client())
 
-	menssagem := "Adicionando post: " + nomeArquivo
-	bConteudo := []byte(conteudo)
+		arquivoPost, _, _, err := client.Repositories.GetContents("maiconio", "blog.golangbr.org", "_posts/" + nomeArquivo, &github.RepositoryContentGetOptions{})
+        
+		if err == nil {
+			if arquivoPost == nil {
+				opt := &github.CommitsListOptions{}
+				commits, _, err := client.Repositories.ListCommits("maiconio", "blog.golangbr.org", opt)
+				if err == nil {
+					menssagem := "Adicionando post: " + nomeArquivo
+					bConteudo := []byte(conteudo)
 
-	opt := &github.CommitsListOptions{}
-	commits, _, err := client.Repositories.ListCommits("maiconio", "blog.golangbr.org", opt)
-	if err != nil {
-		fmt.Printf("Repositories.ListCommits returned error: %v", err)
+					repositoryContentsOptions := &github.RepositoryContentFileOptions{
+						Message: &menssagem,
+						Content: bConteudo,
+						SHA:     commits[0].SHA, //
+						Committer: &github.CommitAuthor{
+							Name: github.String("maiconio"), Email: github.String("maiconscosta@gmail.com")},
+					}
+
+					_, _, err = client.Repositories.CreateFile("maiconio", "blog.golangbr.org", "_posts/" + nomeArquivo, repositoryContentsOptions)
+					if err != nil {
+						fmt.Printf("Erro ao efetuar o commit do arquivo: %v", err)
+					} else {
+						fmt.Println(nomeArquivo + " gravado.")
+					}
+				} else {
+					fmt.Printf("Erro ao obter a lista de commits: %v", err)
+				}
+			}
+		} else {
+			fmt.Printf("Erro ao obter informações do arquivo "+nomeArquivo+": %v", err)
+		}
+	} else {
+		fmt.Println("Não foi possível inicializar o client o github")
 	}
-	fmt.Println(commits[0].SHA)
-
-	repositoryContentsOptions := &github.RepositoryContentFileOptions{
-		Message:   &menssagem,
-		Content:   bConteudo,
-		SHA:       commits[0].SHA, //
-		Committer: &github.CommitAuthor{Name: github.String("n"), Email: github.String("e")},
-	}
-
-	_, _, err = client.Repositories.CreateFile("maiconio", "blog.golangbr.org", nomeArquivo, repositoryContentsOptions)
-	if err != nil {
-		fmt.Printf("Repositories.CreateFile returned error: %v", err)
-	}
-
 }
