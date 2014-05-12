@@ -109,7 +109,7 @@ func gravaUltimasEntradas(urlBlog string, w *sync.WaitGroup, ultimaLeitura strin
 }
 
 func listaBlogs() []string {
-	resp, err := http.Get("https://github.com/maiconio/blog.golangbr.org/blob/master/_BLOGS")
+	resp, err := http.Get("https://raw.githubusercontent.com/maiconio/blog.golangbr.org/master/_BLOGS")
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
@@ -143,7 +143,7 @@ func escreverUltimaLeitura() {
 
 func comitaArquivo(nomeArquivo, conteudo string) {
 	t := &oauth.Transport{
-		Token: &oauth.Token{AccessToken: "CHAVE SUPER SECRETA AQUI"},
+		Token: &oauth.Token{AccessToken: "SENHA SUPER SECRETA AQUI"},
 	}
 
 	if t != nil {
