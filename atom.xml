@@ -3,7 +3,7 @@ layout: nil
 ---
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
- 
+
  <title>blog.golangbr.org</title>
  <link href="http://blog.golangbr.org/atom.xml" rel="self"/>
  <link href="http://blog.golangbr.org/"/>
@@ -23,6 +23,4 @@ layout: nil
    <content type="html">{{ .content | html }}</content>
  </entry>
  {{ end }}
- 
 </feed>
-

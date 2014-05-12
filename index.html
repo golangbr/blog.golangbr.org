@@ -2,10 +2,10 @@
 layout: default
 ---
 {{ range .site.posts }}
-<div class="article">
-	<h3 class="title"><a href="{{.url}}">{{ .title }}</a></h3>
-	<p class="date"> {{ .date | date_to_string }}</p>
-	{{ .content }}
-        <cite>Por {{ .author }}</cite>
-</div>
+  <div class="article">
+    <h3 class="title"><a href="{{.url}}">{{ .title }}</a></h3>
+    <p class="date"> {{ .date | date_to_string }}</p>
+    {{ .content }}
+    <cite>Por {{ .author }}</cite>
+  </div>
 {{ end }}
