@@ -2,9 +2,10 @@ package main
 
 import (
 	"code.google.com/p/goauth2/oauth"
-	"encoding/xml"
+	//	"encoding/xml"
 	"fmt"
 	"github.com/google/go-github/github"
+	rss "github.com/maiconio/go-pkg-rss"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +44,7 @@ func main() {
 	//1- [OK]	olha arquivo texto no repositório do blog com lista de blogs
 	//2- [OK]	iniciar uma goroutine para olhar se o blog possui feeds
 	//3- [OK]	caso possua, parseia entradas
-	//3.1[10%]	parsear entradas com a lib github.com/SlyMarbo/rss
+	//3.1[OK]	parsear entradas com a lib go-pkg-rss - suporte a RSS e ATOM!!!
 	//3.2[OK]	e olha se a última possui a tag golang (apenas a última para simplificar)
 	//3.3[OK]	criar estrutura pra controlar a data e hora da ultima execução.
 	//		Parsear apenas entradas que tenham data de publicação superior a esta marca.
@@ -70,55 +71,33 @@ func main() {
 func gravaUltimasEntradas(urlBlog string, w *sync.WaitGroup, ultimaLeitura string) {
 	if len(urlBlog) > 0 {
 		fmt.Println("Processando o blog: " + urlBlog)
-		resp, err := http.Get(urlBlog)
-		if err != nil {
-			fmt.Printf("%s", err)
-			os.Exit(1)
-		} else {
-			defer resp.Body.Close()
-			conteudoXML, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				fmt.Printf("%s", err)
-				os.Exit(1)
-			}
 
-			var x XMLFeed
-			xml.Unmarshal(conteudoXML, &x)
+		feed := rss.New(5, true, nil, nil)
+		feed.Fetch(urlBlog, nil)
 
-			for i := 0; i < len(x.Entradas); i++ {
-				d := x.Entradas[i].DataPublicacao
-
-				var f string
-				switch {
-				case strings.HasSuffix(strings.ToUpper(d), "Z"):
-					f = "2006-01-02T15:04:05Z"
-				default:
-					f = "2006-01-02T15:04:05-07:00"
-				}
-				t, _ := time.Parse(f, d)
-				d = t.UTC().Format(time.RFC3339Nano)
+		if len(feed.Channels) > 0 {
+			c := feed.Channels[0]
+			for i := 0; i < len(c.Items); i++ {
+				dataPublicacao, _ := c.Items[i].ParsedPubDate()
+				d := dataPublicacao.UTC().Format(time.RFC3339Nano)
 				d = d[0:4] + d[5:7] + d[8:10] + d[11:13] + d[14:16]
 
-				fmt.Println(d)
-				fmt.Println(ultimaLeitura)
-
 				if d > ultimaLeitura {
-					entrada := x.Entradas[i]
-
+					entrada := c.Items[i]
 					ehGolang := false
-					for i := 0; i < len(entrada.Categorias); i++ {
-						if strings.Contains(strings.ToLower(entrada.Categorias[i].Termo), "golang") {
+					for j := 0; j < len(entrada.Categories); j++ {
+						if strings.Contains(strings.ToLower(entrada.Categories[j].Text), "golang") {
 							ehGolang = true
 						}
 					}
 
 					if ehGolang {
-						nomeArquivo := entrada.DataPublicacao[0:10] + "-" + url.QueryEscape(entrada.Titulo) + ".md"
+						nomeArquivo := dataPublicacao.UTC().Format(time.RFC3339Nano)[0:10] + "-" + url.QueryEscape(entrada.Title) + ".md"
 						conteudo := "---\n"
 						conteudo = conteudo + "layout: default\n"
-						conteudo = conteudo + "title: " + entrada.Titulo + "\n"
+						conteudo = conteudo + "title: " + entrada.Title + "\n"
 						conteudo = conteudo + "---\n"
-						conteudo = conteudo + entrada.Conteudo
+						conteudo = conteudo + entrada.Content.Text
 
 						comitaArquivo(nomeArquivo, conteudo)
 					}
@@ -130,7 +109,7 @@ func gravaUltimasEntradas(urlBlog string, w *sync.WaitGroup, ultimaLeitura strin
 }
 
 func listaBlogs() []string {
-	resp, err := http.Get("https://raw.githubusercontent.com/maiconio/blog.golangbr.org/master/_BLOGS")
+	resp, err := http.Get("https://github.com/maiconio/blog.golangbr.org/blob/master/_BLOGS")
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
@@ -164,7 +143,7 @@ func escreverUltimaLeitura() {
 
 func comitaArquivo(nomeArquivo, conteudo string) {
 	t := &oauth.Transport{
-		Token: &oauth.Token{AccessToken: ""},
+		Token: &oauth.Token{AccessToken: "CHAVE SUPER SECRETA AQUI"},
 	}
 
 	if t != nil {
